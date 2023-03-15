@@ -59,29 +59,11 @@ export class AppStack extends cdk.Stack {
             description: 'IAM Role for EventBridge Pipe',
             assumedBy: new ServicePrincipal('pipes.amazonaws.com')
         });
-        //Consume Permission on SQS
-        queue.grantConsumeMessages(pipeRole);
-        // RunTask Permission on Cluster
-        pipeRole.addToPolicy(new PolicyStatement({
-            actions: ['ecs:RunTask'],
-            resources: [fargateTaskDefinition.taskDefinitionArn],
-            effect: Effect.ALLOW,
-            conditions: {
-                'ArnLike': {
-                    'ecs:cluster': ecsCluster.clusterArn
-                }
-            }
-        }))
-        pipeRole.addToPolicy(new PolicyStatement({
-            actions: ['iam:PassRole'],
-            resources: ['*'],
-            effect: Effect.ALLOW,
-            conditions: {
-                'StringLike': {
-                    'iam:PassedToService': 'ecs-tasks.amazonaws.com'
-                }
-            }
-        }))
+
+        //Consume Permission on SQS and Fargate
+        queue.grantConsumeMessages(pipeRole)
+        fargateTaskDefinition.grantRun(pipeRole)
+
 
         // EventBridge Pipe with source as SQS and Target as Fargate Task
         // Payload from SQS passed as Environment Variables to Fargate Task
